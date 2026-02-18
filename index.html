@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Werewolf Online - Auto Random Roles</title>
+    <title>Werewolf Online - Multiplayer</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Roboto:wght@300;400;700&display=swap');
         
@@ -188,133 +189,6 @@
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
-        }
-
-        .btn-mic {
-            background: linear-gradient(45deg, #9b59b6, #8e44ad);
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-mic.muted {
-            background: linear-gradient(45deg, #7f8c8d, #95a5a6);
-        }
-
-        .voice-panel {
-            background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(0, 0, 0, 0.3));
-            border: 2px solid #9b59b6;
-            border-radius: 20px;
-            padding: 25px;
-            margin: 20px 0;
-            display: none;
-        }
-
-        .voice-panel.active {
-            display: block;
-            animation: slideIn 0.5s ease;
-        }
-
-        .voice-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .voice-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 50px;
-        }
-
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #e74c3c;
-            transition: all 0.3s;
-        }
-
-        .status-indicator.connected {
-            background: #00ff88;
-            box-shadow: 0 0 10px #00ff88;
-        }
-
-        .visualizer-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            height: 40px;
-            margin: 15px 0;
-        }
-
-        .visualizer-bar {
-            width: 4px;
-            background: linear-gradient(to top, #9b59b6, #e94560);
-            border-radius: 2px;
-            transition: height 0.1s ease;
-            min-height: 4px;
-        }
-
-        .voice-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .voice-player {
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 15px;
-            text-align: center;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .voice-player.speaking {
-            border-color: #f39c12;
-            box-shadow: 0 0 20px rgba(243, 156, 18, 0.4);
-            transform: scale(1.05);
-        }
-
-        .voice-avatar {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin: 0 auto 10px;
-            position: relative;
-        }
-
-        .voice-player.speaking .voice-avatar {
-            background: linear-gradient(135deg, #f39c12, #e67e22);
-            animation: avatarPulse 1s infinite;
-        }
-
-        @keyframes avatarPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .voice-name {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 5px;
         }
 
         .room-grid {
@@ -528,6 +402,27 @@
             color: #00ff88;
         }
 
+        .kick-btn {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .player-slot:hover .kick-btn {
+            display: flex;
+        }
+
         .chat-container {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 15px;
@@ -624,17 +519,6 @@
             opacity: 0.4;
             filter: grayscale(100%);
             cursor: not-allowed;
-        }
-
-        .game-seat.speaking {
-            border-color: #f39c12;
-            box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
-            animation: seatPulse 1s infinite;
-        }
-
-        @keyframes seatPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
         }
 
         .seat-number {
@@ -861,10 +745,8 @@
             h1 { font-size: 2.5rem; }
             .timer { font-size: 2.5rem; }
             .room-grid { grid-template-columns: 1fr; }
-            .voice-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
-        /* Role Assignment Animation */
         .role-assigning {
             position: fixed;
             top: 0;
@@ -904,7 +786,6 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* Auto Balance Badge */
         .auto-badge {
             display: inline-block;
             background: linear-gradient(45deg, #9b59b6, #e94560);
@@ -921,17 +802,52 @@
             50% { opacity: 1; }
             100% { opacity: 0.8; }
         }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 10px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .conn-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e74c3c;
+        }
+
+        .conn-indicator.connected {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .conn-indicator.connecting {
+            background: #f39c12;
+            animation: blink 1s infinite;
+        }
     </style>
 </head>
 <body>
     <div class="stars" id="stars"></div>
     <div class="moon"></div>
 
+    <div class="connection-status" id="connStatus">
+        <span class="conn-indicator" id="connIndicator"></span>
+        <span id="connText">Connecting...</span>
+    </div>
+
     <div class="container">
         <header>
             <h1>🐺 WEREWOLF ONLINE</h1>
-            <p class="subtitle">Auto Random Role Assignment</p>
-            <span class="online-badge">● SMART RANDOMIZER</span>
+            <p class="subtitle">Multiplayer with Real-time Sync</p>
+            <span class="online-badge">● CLOUD SYNC ENABLED</span>
         </header>
 
         <!-- Landing Page -->
@@ -1080,38 +996,6 @@
                 </div>
             </div>
 
-            <!-- Voice Chat Panel -->
-            <div class="voice-panel" id="voicePanel">
-                <div class="voice-header">
-                    <div>
-                        <h3 style="color: #9b59b6; margin-bottom: 5px;">🎙️ Voice Chat Room</h3>
-                        <p style="color: #aaa; font-size: 0.9rem;">Bicara dengan pemain lain secara real-time</p>
-                    </div>
-                    <div class="voice-status">
-                        <span class="status-indicator" id="voiceStatus"></span>
-                        <span id="voiceStatusText">Disconnected</span>
-                    </div>
-                </div>
-
-                <div class="visualizer-container" id="visualizer"></div>
-
-                <div class="action-panel">
-                    <button class="btn btn-mic" id="micBtn" onclick="toggleMic()">
-                        <span id="micIcon">🎤</span>
-                        <span id="micText">Mute Mic</span>
-                    </button>
-                    <button class="btn btn-secondary" onclick="toggleDeafen()">
-                        <span id="deafenIcon">🔊</span>
-                        <span id="deafenText">Deafen</span>
-                    </button>
-                    <button class="btn btn-primary" onclick="connectVoice()">
-                        🟢 Connect Voice
-                    </button>
-                </div>
-
-                <div class="voice-grid" id="voiceGrid"></div>
-            </div>
-
             <div class="lobby-grid">
                 <div>
                     <h3 style="color: #ffd700; margin-bottom: 15px;">👥 Pemain (<span id="playerCount">0</span>/12)</h3>
@@ -1132,19 +1016,17 @@
                 </div>
 
                 <div>
-                    <h3 style="color: #9b59b6; margin-bottom: 15px;">🎙️ Kontrol Suara</h3>
-                    <div style="background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px; text-align: center;">
-                        <p style="color: #aaa; margin-bottom: 15px; font-size: 0.9rem;">
-                            Voice chat memungkinkan komunikasi real-time antar pemain. 
+                    <h3 style="color: #9b59b6; margin-bottom: 15px;">ℹ️ Info</h3>
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px;">
+                        <p style="color: #aaa; font-size: 0.9rem; line-height: 1.6;">
+                            <strong>Status:</strong> <span id="syncStatus" style="color: #00ff88;">Online</span>
                             <br><br>
-                            <strong>Cara pakai:</strong><br>
-                            1. Klik "Connect Voice"<br>
-                            2. Izinkan akses mikrofon<br>
-                            3. Bicara secara langsung!
+                            <strong>Cara Main:</strong>
+                            <br>1. Tunggu teman join
+                            <br>2. Pilih mode acak
+                            <br>3. Klik Mulai Game
+                            <br>4. Peran akan diacak otomatis!
                         </p>
-                        <button class="btn btn-mic" onclick="document.getElementById('voicePanel').classList.add('active')" style="width: 100%;">
-                            🎙️ Buka Voice Panel
-                        </button>
                     </div>
                 </div>
             </div>
@@ -1165,24 +1047,6 @@
             <div class="timer-container">
                 <div class="timer" id="timer">05:00</div>
                 <div class="phase-indicator" id="phaseIndicator">☀️ DISCUSSION PHASE</div>
-            </div>
-
-            <div class="voice-panel active" id="gameVoicePanel" style="margin-bottom: 20px;">
-                <div class="voice-header" style="margin-bottom: 10px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <h3 style="color: #9b59b6; font-size: 1.2rem;">🎙️ Voice Chat</h3>
-                        <span class="status-indicator connected" id="gameVoiceStatus"></span>
-                    </div>
-                    <div class="action-panel" style="margin: 0;">
-                        <button class="btn btn-mic" id="gameMicBtn" onclick="toggleMic()" style="padding: 8px 15px; font-size: 0.8rem;">
-                            <span id="gameMicIcon">🎤</span>
-                        </button>
-                        <button class="btn btn-secondary" onclick="toggleDeafen()" style="padding: 8px 15px; font-size: 0.8rem;">
-                            <span id="gameDeafenIcon">🔊</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="voice-grid" id="gameVoiceGrid" style="grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));"></div>
             </div>
 
             <div class="action-panel" id="gameControls">
@@ -1246,6 +1110,17 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
+        // Supabase Configuration - GANTI DENGAN KREDENSIAL ANDA
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_KEY = 'your-anon-key';
+        
+        let supabase = null;
+        
+        // Initialize Supabase if credentials are valid
+        if (SUPABASE_URL.includes('your-project') === false) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+
         // Game State
         const GameState = {
             currentRoom: null,
@@ -1257,7 +1132,8 @@
             currentPhase: 'day',
             timer: null,
             timeLeft: 300,
-            randomMode: 'smart', // 'smart', 'random', 'manual'
+            randomMode: 'smart',
+            subscription: null,
 
             generateRoomCode() {
                 return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -1304,218 +1180,129 @@
             }
         };
 
-        // Voice State
-        const VoiceState = {
-            stream: null,
-            audioContext: null,
-            analyser: null,
-            microphone: null,
-            isMuted: false,
-            isDeafened: false,
-            isSpeaking: false,
-            speakingThreshold: 30,
-
-            async initAudio() {
+        // Database Operations
+        const DB = {
+            async createRoom(roomCode, hostName) {
+                if (!supabase) return this.createLocalRoom(roomCode, hostName);
+                
                 try {
-                    this.stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true,
-                            sampleRate: 44100
-                        }
-                    });
+                    const { data, error } = await supabase
+                        .from('rooms')
+                        .insert([
+                            {
+                                code: roomCode,
+                                host: hostName,
+                                players: [{ name: hostName, isHost: true, isReady: true }],
+                                game_started: false,
+                                created_at: new Date().toISOString()
+                            }
+                        ]);
                     
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    this.analyser = this.audioContext.createAnalyser();
-                    this.microphone = this.audioContext.createMediaStreamSource(this.stream);
-                    this.microphone.connect(this.analyser);
-                    
-                    this.analyser.fftSize = 256;
-                    this.analyser.smoothingTimeConstant = 0.8;
-                    
-                    this.startVisualization();
-                    this.updateVoiceStatus(true);
-                    
+                    if (error) throw error;
                     return true;
                 } catch (err) {
-                    console.error('Audio init failed:', err);
-                    alert('Tidak bisa mengakses mikrofon. Pastikan Anda memberikan izin.');
-                    return false;
+                    console.log('Using local storage fallback');
+                    return this.createLocalRoom(roomCode, hostName);
                 }
             },
 
-            startVisualization() {
-                const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-                
-                const analyze = () => {
-                    if (!this.analyser) return;
-                    
-                    this.analyser.getByteFrequencyData(dataArray);
-                    
-                    let sum = 0;
-                    for (let i = 0; i < dataArray.length; i++) {
-                        sum += dataArray[i];
-                    }
-                    const average = sum / dataArray.length;
-                    
-                    const bars = document.querySelectorAll('.visualizer-bar');
-                    const step = Math.floor(dataArray.length / bars.length);
-                    
-                    for (let i = 0; i < bars.length; i++) {
-                        const value = dataArray[i * step];
-                        const height = Math.max(4, (value / 255) * 40);
-                        bars[i].style.height = height + 'px';
-                    }
-                    
-                    const wasSpeaking = this.isSpeaking;
-                    this.isSpeaking = average > this.speakingThreshold;
-                    
-                    if (this.isSpeaking !== wasSpeaking) {
-                        updateSpeakingUI(this.isSpeaking);
-                    }
-                    
-                    requestAnimationFrame(analyze);
+            createLocalRoom(roomCode, hostName) {
+                const roomData = {
+                    code: roomCode,
+                    host: hostName,
+                    players: [{ name: hostName, isHost: true, isReady: true }],
+                    game_started: false,
+                    created_at: new Date().toISOString()
                 };
+                localStorage.setItem(`room_${roomCode}`, JSON.stringify(roomData));
+                return true;
+            },
+
+            async getRoom(roomCode) {
+                if (!supabase) return this.getLocalRoom(roomCode);
                 
-                analyze();
-            },
-
-            toggleMute() {
-                this.isMuted = !this.isMuted;
-                if (this.stream) {
-                    this.stream.getAudioTracks().forEach(track => {
-                        track.enabled = !this.isMuted;
-                    });
+                try {
+                    const { data, error } = await supabase
+                        .from('rooms')
+                        .select('*')
+                        .eq('code', roomCode)
+                        .single();
+                    
+                    if (error) throw error;
+                    return data;
+                } catch (err) {
+                    return this.getLocalRoom(roomCode);
                 }
-                updateMicUI();
-                return this.isMuted;
             },
 
-            toggleDeafen() {
-                this.isDeafened = !this.isDeafened;
-                updateDeafenUI();
-                return this.isDeafened;
+            getLocalRoom(roomCode) {
+                const data = localStorage.getItem(`room_${roomCode}`);
+                return data ? JSON.parse(data) : null;
             },
 
-            stop() {
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                    this.stream = null;
-                }
-                if (this.audioContext) {
-                    this.audioContext.close();
-                    this.audioContext = null;
-                }
-                this.updateVoiceStatus(false);
-            },
-
-            updateVoiceStatus(connected) {
-                const indicator = document.getElementById('voiceStatus');
-                const text = document.getElementById('voiceStatusText');
-                const gameIndicator = document.getElementById('gameVoiceStatus');
+            async updateRoom(roomCode, updates) {
+                if (!supabase) return this.updateLocalRoom(roomCode, updates);
                 
-                if (indicator) {
-                    indicator.className = 'status-indicator ' + (connected ? 'connected' : '');
-                }
-                if (gameIndicator) {
-                    gameIndicator.className = 'status-indicator ' + (connected ? 'connected' : '');
-                }
-                if (text) {
-                    text.textContent = connected ? 'Connected' : 'Disconnected';
-                }
-            }
-        };
-
-        // Room Sync
-        const RoomSync = {
-            channel: null,
-            
-            init() {
-                if (typeof BroadcastChannel !== 'undefined') {
-                    this.channel = new BroadcastChannel('werewolf_game');
-                    this.channel.onmessage = (e) => this.handleMessage(e.data);
-                }
-                setInterval(() => this.pollUpdates(), 2000);
-            },
-
-            broadcast(data) {
-                if (this.channel) this.channel.postMessage(data);
-                this.updateRoomData();
-            },
-
-            updateRoomData() {
-                if (GameState.currentRoom) {
-                    localStorage.setItem(`room_${GameState.currentRoom}`, JSON.stringify({
-                        code: GameState.currentRoom,
-                        players: GameState.players,
-                        roles: GameState.roles,
-                        gameStarted: GameState.gameStarted,
-                        randomMode: GameState.randomMode,
-                        timestamp: Date.now()
-                    }));
+                try {
+                    const { data, error } = await supabase
+                        .from('rooms')
+                        .update(updates)
+                        .eq('code', roomCode);
+                    
+                    if (error) throw error;
+                    return true;
+                } catch (err) {
+                    return this.updateLocalRoom(roomCode, updates);
                 }
             },
 
-            pollUpdates() {
-                if (!GameState.currentRoom) return;
-                const data = localStorage.getItem(`room_${GameState.currentRoom}`);
-                if (data) {
-                    const parsed = JSON.parse(data);
-                    if (parsed.timestamp > (GameState.lastSync || 0)) {
-                        GameState.lastSync = parsed.timestamp;
-                        if (!GameState.isHost) {
-                            GameState.players = parsed.players;
-                            GameState.roles = parsed.roles;
-                            GameState.gameStarted = parsed.gameStarted;
-                            GameState.randomMode = parsed.randomMode || 'smart';
-                            updatePlayersList();
-                            updateVoiceGrid();
-                            if (parsed.gameStarted && !GameState.gameStarted) enterGame();
-                        }
-                    }
+            updateLocalRoom(roomCode, updates) {
+                const room = this.getLocalRoom(roomCode);
+                if (room) {
+                    Object.assign(room, updates);
+                    localStorage.setItem(`room_${roomCode}`, JSON.stringify(room));
                 }
+                return true;
             },
 
-            handleMessage(data) {
-                switch(data.type) {
-                    case 'player_joined':
-                        if (GameState.isHost) {
-                            GameState.players.push(data.player);
-                            GameState.save();
-                            updatePlayersList();
-                            updateVoiceGrid();
-                            addChatMessage('system', `${data.player.name} bergabung`);
-                        }
-                        break;
-                    case 'chat':
-                        addChatMessage(data.sender, data.message, data.sender === GameState.playerName);
-                        break;
-                    case 'game_start':
-                        enterGame();
-                        break;
-                    case 'kick':
-                        if (data.playerName === GameState.playerName) {
-                            alert('Anda dikeluarkan dari room');
-                            leaveRoom();
-                        }
-                        break;
+            subscribeToRoom(roomCode, callback) {
+                if (!supabase) {
+                    // Fallback: polling every 2 seconds
+                    return setInterval(async () => {
+                        const room = await this.getRoom(roomCode);
+                        callback(room);
+                    }, 2000);
                 }
+                
+                return supabase
+                    .channel(`room_${roomCode}`)
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` },
+                        (payload) => callback(payload.new)
+                    )
+                    .subscribe();
             }
         };
 
         let qrcode = null;
+        let syncInterval = null;
 
         function init() {
             createStars();
-            createVisualizerBars();
+            updateConnectionStatus('connected');
             RoomSync.init();
             
             const urlParams = new URLSearchParams(window.location.search);
             const roomCode = urlParams.get('room');
-            if (roomCode) document.getElementById('roomCode').value = roomCode;
+            if (roomCode) {
+                document.getElementById('roomCode').value = roomCode;
+                // Auto-join if room exists
+                checkAndJoinRoom(roomCode);
+            }
             
-            if (GameState.load()) restoreSession();
+            if (GameState.load()) {
+                restoreSession();
+            }
         }
 
         function createStars() {
@@ -1530,13 +1317,19 @@
             }
         }
 
-        function createVisualizerBars() {
-            const container = document.getElementById('visualizer');
-            for (let i = 0; i < 20; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'visualizer-bar';
-                bar.style.height = '4px';
-                container.appendChild(bar);
+        function updateConnectionStatus(status) {
+            const indicator = document.getElementById('connIndicator');
+            const text = document.getElementById('connText');
+            
+            indicator.className = 'conn-indicator ' + status;
+            text.textContent = status === 'connected' ? 'Connected' : 
+                              status === 'connecting' ? 'Connecting...' : 'Offline';
+        }
+
+        async function checkAndJoinRoom(roomCode) {
+            const room = await DB.getRoom(roomCode);
+            if (!room) {
+                showToast('Room tidak ditemukan!');
             }
         }
 
@@ -1545,7 +1338,7 @@
             else enterLobby();
         }
 
-        function createRoom() {
+        async function createRoom() {
             const name = document.getElementById('hostName').value.trim();
             if (!name) { alert('Masukkan nama!'); return; }
 
@@ -1553,15 +1346,17 @@
             GameState.currentRoom = roomCode;
             GameState.playerName = name;
             GameState.isHost = true;
-            GameState.players = [{ name, isHost: true, id: Date.now(), isReady: true, voiceConnected: false }];
+            GameState.players = [{ name, isHost: true, isReady: true }];
             
+            await DB.createRoom(roomCode, name);
             GameState.save();
-            RoomSync.updateRoomData();
+            
             enterLobby();
             setupShareLink(roomCode);
+            startSync();
         }
 
-        function joinRoom() {
+        async function joinRoom() {
             const name = document.getElementById('joinName').value.trim();
             let roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
             
@@ -1573,27 +1368,35 @@
                 roomCode = parts[parts.length - 1];
             }
 
-            const roomData = localStorage.getItem(`room_${roomCode}`);
-            if (!roomData) { alert('Room tidak ditemukan!'); return; }
+            const room = await DB.getRoom(roomCode);
+            if (!room) { 
+                alert('Room tidak ditemukan! Pastikan kode benar.'); 
+                return; 
+            }
             
-            const data = JSON.parse(roomData);
-            if (data.players.length >= 12) { alert('Room penuh!'); return; }
-            if (data.players.find(p => p.name.toLowerCase() === name.toLowerCase())) {
-                alert('Nama sudah digunakan!'); return;
+            if (room.players.length >= 12) { 
+                alert('Room penuh!'); 
+                return; 
+            }
+            
+            if (room.players.find(p => p.name.toLowerCase() === name.toLowerCase())) {
+                alert('Nama sudah digunakan!'); 
+                return;
             }
 
             GameState.currentRoom = roomCode;
             GameState.playerName = name;
             GameState.isHost = false;
-            GameState.players = data.players;
+            GameState.players = room.players;
             
-            const newPlayer = { name, isHost: false, id: Date.now(), isReady: true, voiceConnected: false };
+            const newPlayer = { name, isHost: false, isReady: true };
             GameState.players.push(newPlayer);
+            
+            await DB.updateRoom(roomCode, { players: GameState.players });
             GameState.save();
             
-            RoomSync.broadcast({ type: 'player_joined', player: newPlayer });
-            RoomSync.updateRoomData();
             enterLobby();
+            startSync();
         }
 
         function enterLobby() {
@@ -1606,9 +1409,8 @@
             }
             
             updatePlayersList();
-            updateVoiceGrid();
             updateRandomMode();
-            addChatMessage('system', `Selamat datang! Mode acak: ${GameState.randomMode.toUpperCase()}`);
+            addChatMessage('system', `Selamat datang di room ${GameState.currentRoom}!`);
         }
 
         function setupShareLink(roomCode) {
@@ -1623,6 +1425,22 @@
             qrcode = new QRCode(qrContainer, {
                 text: shareUrl, width: 150, height: 150,
                 colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+
+        function startSync() {
+            // Subscribe to room changes
+            syncInterval = DB.subscribeToRoom(GameState.currentRoom, (room) => {
+                if (!room) return;
+                
+                GameState.players = room.players || GameState.players;
+                GameState.gameStarted = room.game_started || false;
+                
+                updatePlayersList();
+                
+                if (GameState.gameStarted && !document.getElementById('gamePage').classList.contains('active')) {
+                    enterGame();
+                }
             });
         }
 
@@ -1675,11 +1493,9 @@
                 grid.appendChild(slot);
             });
 
-            // Update max roles
             const maxRoles = document.getElementById('maxRoles');
             if (maxRoles) maxRoles.textContent = GameState.players.length;
             
-            // Auto update smart config
             if (GameState.randomMode === 'smart') {
                 applySmartBalance();
             }
@@ -1701,31 +1517,30 @@
             const count = GameState.players.length;
             if (count === 0) return;
             
-            // Smart algorithm based on player count
             if (count <= 5) {
                 GameState.roles = {
                     werewolf: 1,
                     seer: 1,
                     guardian: 0,
-                    villager: count - 2
+                    villager: Math.max(1, count - 2)
                 };
             } else if (count <= 8) {
                 GameState.roles = {
                     werewolf: 2,
                     seer: 1,
                     guardian: 1,
-                    villager: count - 4
+                    villager: Math.max(1, count - 4)
                 };
             } else {
+                const wolves = Math.floor(count / 3);
                 GameState.roles = {
-                    werewolf: Math.floor(count / 3),
+                    werewolf: wolves,
                     seer: 1,
                     guardian: 1,
-                    villager: count - Math.floor(count / 3) - 2
+                    villager: Math.max(1, count - wolves - 2)
                 };
             }
             
-            // Update UI
             Object.keys(GameState.roles).forEach(role => {
                 const el = document.getElementById(`count-${role}`);
                 if (el) el.textContent = GameState.roles[role];
@@ -1733,161 +1548,12 @@
             updateTotalRoles();
         }
 
-        function updateVoiceGrid() {
-            const lobbyGrid = document.getElementById('voiceGrid');
-            const gameGrid = document.getElementById('gameVoiceGrid');
-            
-            [lobbyGrid, gameGrid].forEach((grid, index) => {
-                if (!grid) return;
-                
-                grid.innerHTML = '';
-                GameState.players.forEach(player => {
-                    const card = document.createElement('div');
-                    card.className = 'voice-player';
-                    card.id = `voice-${player.name}`;
-                    
-                    const isMe = player.name === GameState.playerName;
-                    const isSpeaking = player.name === GameState.playerName && VoiceState.isSpeaking;
-                    
-                    if (isSpeaking) card.classList.add('speaking');
-                    
-                    card.innerHTML = `
-                        <div class="voice-avatar">
-                            ${player.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div class="voice-name">${isMe ? 'You' : player.name}</div>
-                        <div class="voice-icons">
-                            <span class="mic-icon ${player.isMuted ? 'active' : ''}">🎤</span>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-            });
-        }
-
-        function updateSpeakingUI(isSpeaking) {
-            const myCard = document.getElementById(`voice-${GameState.playerName}`);
-            if (myCard) {
-                if (isSpeaking && !VoiceState.isMuted) {
-                    myCard.classList.add('speaking');
-                } else {
-                    myCard.classList.remove('speaking');
-                }
-            }
-
-            const mySeat = document.querySelector(`.game-seat[data-name="${GameState.playerName}"]`);
-            if (mySeat) {
-                if (isSpeaking && !VoiceState.isMuted) {
-                    mySeat.classList.add('speaking');
-                } else {
-                    mySeat.classList.remove('speaking');
-                }
-            }
-        }
-
-        function updateMicUI() {
-            const btn = document.getElementById('micBtn');
-            const gameBtn = document.getElementById('gameMicBtn');
-            const icon = document.getElementById('micIcon');
-            const gameIcon = document.getElementById('gameMicIcon');
-            const text = document.getElementById('micText');
-            
-            const isMuted = VoiceState.isMuted;
-            
-            if (btn) {
-                btn.classList.toggle('muted', isMuted);
-                btn.classList.toggle('speaking', !isMuted && VoiceState.isSpeaking);
-            }
-            if (gameBtn) gameBtn.classList.toggle('muted', isMuted);
-            
-            if (icon) icon.textContent = isMuted ? '🔇' : '🎤';
-            if (gameIcon) gameIcon.textContent = isMuted ? '🔇' : '🎤';
-            if (text) text.textContent = isMuted ? 'Unmute' : 'Mute Mic';
-        }
-
-        function updateDeafenUI() {
-            const icon = document.getElementById('deafenIcon');
-            const gameIcon = document.getElementById('gameDeafenIcon');
-            const text = document.getElementById('deafenText');
-            
-            if (icon) icon.textContent = VoiceState.isDeafened ? '🔇' : '🔊';
-            if (gameIcon) gameIcon.textContent = VoiceState.isDeafened ? '🔇' : '🔊';
-            if (text) text.textContent = VoiceState.isDeafened ? 'Undeafen' : 'Deafen';
-        }
-
-        async function connectVoice() {
-            const success = await VoiceState.initAudio();
-            if (success) {
-                showToast('🎙️ Voice chat connected!');
-                document.getElementById('voicePanel').classList.add('active');
-                
-                const me = GameState.players.find(p => p.name === GameState.playerName);
-                if (me) {
-                    me.voiceConnected = true;
-                    GameState.save();
-                    updatePlayersList();
-                    updateVoiceGrid();
-                }
-            }
-        }
-
-        function toggleMic() {
-            const isMuted = VoiceState.toggleMute();
-            const me = GameState.players.find(p => p.name === GameState.playerName);
-            if (me) {
-                me.isMuted = isMuted;
-                GameState.save();
-                updateVoiceGrid();
-            }
-            showToast(isMuted ? '🔇 Mic muted' : '🎤 Mic unmuted');
-        }
-
-        function toggleDeafen() {
-            const isDeafened = VoiceState.toggleDeafen();
-            showToast(isDeafened ? '🔇 Sound muted' : '🔊 Sound unmuted');
-        }
-
-        function kickPlayer(playerName) {
-            if (!confirm(`Keluarkan ${playerName}?`)) return;
-            GameState.players = GameState.players.filter(p => p.name !== playerName);
-            GameState.save();
-            RoomSync.updateRoomData();
-            updatePlayersList();
-            updateVoiceGrid();
-            RoomSync.broadcast({ type: 'kick', playerName });
-            addChatMessage('system', `${playerName} dikeluarkan`);
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const msg = input.value.trim();
-            if (!msg) return;
-            addChatMessage(GameState.playerName, msg, true);
-            RoomSync.broadcast({ type: 'chat', sender: GameState.playerName, message: msg });
-            input.value = '';
-        }
-
-        function addChatMessage(sender, message, isOwn = false) {
-            const container = document.getElementById('chatMessages');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${sender === 'system' ? 'system' : (isOwn ? 'own' : 'other')}`;
-            
-            if (sender !== 'system') {
-                msgDiv.innerHTML = `<div class="message-author">${sender}</div>${message}`;
-            } else {
-                msgDiv.textContent = message;
-            }
-            
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-
         function changeRoleCount(role, delta) {
             const current = GameState.roles[role];
             const newVal = current + delta;
             if (newVal < 0) return;
             if (role === 'werewolf' && newVal < 1) return;
-            if (role === 'villager' && newVal < 0) return;
+            if (role === 'villager' && newVal < 1) return;
             
             GameState.roles[role] = newVal;
             document.getElementById(`count-${role}`).textContent = newVal;
@@ -1913,7 +1579,6 @@
                 return;
             }
             
-            // Generate preview based on mode
             let previewRoles = [];
             
             if (mode === 'smart') {
@@ -1922,7 +1587,6 @@
                     for (let i = 0; i < cnt; i++) previewRoles.push(role);
                 });
             } else if (mode === 'random') {
-                // Pure random with minimum 1 werewolf
                 previewRoles = generatePureRandom(count);
             } else {
                 Object.entries(GameState.roles).forEach(([role, cnt]) => {
@@ -1930,10 +1594,8 @@
                 });
             }
             
-            // Shuffle for preview
             previewRoles.sort(() => Math.random() - 0.5);
             
-            // Display preview
             const content = document.getElementById('previewContent');
             content.innerHTML = '';
             
@@ -1955,16 +1617,11 @@
         }
 
         function generatePureRandom(count) {
-            const roles = [];
-            // Ensure at least 1 werewolf
-            roles.push('werewolf');
-            
-            // Fill rest randomly
+            const roles = ['werewolf'];
             const pool = ['werewolf', 'werewolf', 'seer', 'guardian', 'villager', 'villager', 'villager', 'villager'];
             for (let i = 1; i < count; i++) {
                 roles.push(pool[Math.floor(Math.random() * pool.length)]);
             }
-            
             return roles;
         }
 
@@ -1979,12 +1636,10 @@
                 return;
             }
 
-            // Show assigning animation
             const assigning = document.getElementById('roleAssigning');
             const status = document.getElementById('assigningStatus');
             assigning.classList.add('active');
             
-            // Step 1: Prepare roles based on mode
             status.textContent = 'Menyiapkan pool peran...';
             await sleep(500);
             
@@ -1998,7 +1653,6 @@
             } else if (GameState.randomMode === 'random') {
                 rolePool = generatePureRandom(count);
             } else {
-                // Manual mode - validate first
                 const total = Object.values(GameState.roles).reduce((a, b) => a + b, 0);
                 if (total !== count) {
                     assigning.classList.remove('active');
@@ -2010,17 +1664,14 @@
                 });
             }
             
-            // Step 2: Shuffle with animation effect
             status.textContent = 'Mengacak peran...';
             await sleep(800);
             
-            // Fisher-Yates shuffle for true randomness
             for (let i = rolePool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [rolePool[i], rolePool[j]] = [rolePool[j], rolePool[i]];
             }
             
-            // Step 3: Assign to players
             status.textContent = 'Menetapkan peran...';
             await sleep(500);
             
@@ -2030,17 +1681,18 @@
                 player.votes = 0;
             });
             
-            // Hide animation
             assigning.classList.remove('active');
             
-            // Start game
             GameState.gameStarted = true;
             GameState.save();
-            RoomSync.updateRoomData();
-            RoomSync.broadcast({ type: 'game_start' });
+            
+            await DB.updateRoom(GameState.currentRoom, {
+                players: GameState.players,
+                game_started: true
+            });
+            
             enterGame();
             
-            // Show role reveal toast
             const myRole = GameState.players.find(p => p.name === GameState.playerName).role;
             const roleIcons = { werewolf: '🐺', seer: '🔮', guardian: '🛡️', villager: '👨‍🌾' };
             showToast(`Peran Anda: ${roleIcons[myRole]} ${myRole.toUpperCase()}!`);
@@ -2054,7 +1706,6 @@
             document.getElementById('lobbyPage').classList.add('hidden');
             document.getElementById('gamePage').classList.remove('hidden');
             setupGameBoard();
-            updateVoiceGrid();
             startTimer(300);
         }
 
@@ -2192,6 +1843,70 @@
             container.scrollTop = container.scrollHeight;
         }
 
+        function addChatMessage(sender, message, isOwn = false) {
+            const container = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender === 'system' ? 'system' : (isOwn ? 'own' : 'other')}`;
+            
+            if (sender !== 'system') {
+                msgDiv.innerHTML = `<div class="message-author">${sender}</div>${message}`;
+            } else {
+                msgDiv.textContent = message;
+            }
+            
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addChatMessage(GameState.playerName, msg, true);
+            input.value = '';
+        }
+
+        async function kickPlayer(playerName) {
+            if (!confirm(`Keluarkan ${playerName}?`)) return;
+            GameState.players = GameState.players.filter(p => p.name !== playerName);
+            GameState.save();
+            await DB.updateRoom(GameState.currentRoom, { players: GameState.players });
+            updatePlayersList();
+            addChatMessage('system', `${playerName} dikeluarkan`);
+        }
+
+        async function leaveRoom() {
+            if (!confirm('Keluar dari room?')) return;
+            
+            if (syncInterval) {
+                clearInterval(syncInterval);
+                syncInterval = null;
+            }
+            
+            if (GameState.isHost) {
+                await DB.updateRoom(GameState.currentRoom, { closed: true });
+            } else {
+                GameState.players = GameState.players.filter(p => p.name !== GameState.playerName);
+                await DB.updateRoom(GameState.currentRoom, { players: GameState.players });
+            }
+            
+            GameState.clear();
+            location.reload();
+        }
+
+        async function closeRoom() {
+            if (!confirm('Tutup room?')) return;
+            
+            if (syncInterval) {
+                clearInterval(syncInterval);
+                syncInterval = null;
+            }
+            
+            await DB.updateRoom(GameState.currentRoom, { closed: true });
+            GameState.clear();
+            location.reload();
+        }
+
         function endGame() {
             if (GameState.timer) clearInterval(GameState.timer);
             document.querySelectorAll('.game-seat').forEach(s => s.classList.add('revealed'));
@@ -2204,27 +1919,25 @@
             }, 2000);
         }
 
-        function leaveRoom() {
-            if (!confirm('Keluar dari room?')) return;
-            if (GameState.isHost) {
-                localStorage.removeItem(`room_${GameState.currentRoom}`);
-            } else {
-                GameState.players = GameState.players.filter(p => p.name !== GameState.playerName);
-                GameState.save();
-                RoomSync.updateRoomData();
-            }
-            VoiceState.stop();
-            GameState.clear();
-            location.reload();
-        }
+        // Room Sync for non-Supabase
+        const RoomSync = {
+            init() {
+                // Polling every 2 seconds for localStorage sync
+                setInterval(() => this.pollUpdates(), 2000);
+            },
 
-        function closeRoom() {
-            if (!confirm('Tutup room?')) return;
-            localStorage.removeItem(`room_${GameState.currentRoom}`);
-            VoiceState.stop();
-            GameState.clear();
-            location.reload();
-        }
+            pollUpdates() {
+                if (!GameState.currentRoom || supabase) return;
+                
+                const room = DB.getLocalRoom(GameState.currentRoom);
+                if (room && room.closed) {
+                    alert('Room telah ditutup host!');
+                    GameState.clear();
+                    location.reload();
+                    return;
+                }
+            }
+        };
 
         document.getElementById('chatInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
